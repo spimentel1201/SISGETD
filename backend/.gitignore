@@ -1,0 +1,9 @@
+# ── Backend ──────────────────────────────
+node_modules/
+.env
+*.log
+uploads/
+
+# ── General ──────────────────────────────
+.DS_Store
+Thumbs.db
