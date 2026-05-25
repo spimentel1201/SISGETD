@@ -1,12 +1,17 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
+
+import authRoutes from './routes/auth.routes.js';
+import expedienteRoutes from './routes/expediente.routes.js';
+import dashboardRoutes from './routes/dashboard.routes.js';
+import webhookRoutes from './routes/webhook.routes.js';
 
 const app = express();
-app.use(helmet());
 
+app.use(helmet());
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
@@ -31,24 +36,24 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-app.use('/api/auth',        require('./routes/auth.routes'));
-app.use('/api/expedientes', require('./routes/expediente.routes'));
-app.use('/api/dashboard',   require('./routes/dashboard.routes'));
-app.use('/api/webhooks',    require('./routes/webhook.routes'));
+app.use('/api/auth', authRoutes);
+app.use('/api/expedientes', expedienteRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-
 app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada.' });
 });
-app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
+
+app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
     error: err.message || 'Error interno del servidor.',
   });
 });
 
-module.exports = app;
+export default app;

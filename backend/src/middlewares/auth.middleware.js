@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
-const authMiddleware = (req, res, next) => {
+export const authMiddleware = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Token de autenticación requerido.' });
@@ -16,15 +16,9 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-/**
- * Middleware de autorización por roles.
- * Uso: authorizeRoles('admin', 'funcionario')
- */
-const authorizeRoles = (...roles) => (req, res, next) => {
+export const authorizeRoles = (...roles) => (req, res, next) => {
   if (!req.user || !roles.includes(req.user.rol)) {
     return res.status(403).json({ error: 'No tiene permisos para esta acción.' });
   }
   next();
 };
-
-module.exports = { authMiddleware, authorizeRoles };

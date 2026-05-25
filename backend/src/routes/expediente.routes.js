@@ -1,10 +1,11 @@
-const router = require('express').Router();
-const { body, param, query } = require('express-validator');
-const validate = require('../middlewares/validate.middleware');
-const { authMiddleware, authorizeRoles } = require('../middlewares/auth.middleware');
-const upload = require('../config/multer');
+import { Router } from 'express';
+import { body, param } from 'express-validator';
+import validate from '../middlewares/validate.middleware.js';
+import { authMiddleware, authorizeRoles } from '../middlewares/auth.middleware.js';
+import upload from '../config/multer.js';
 
-// POST /api/expedientes — Crear nuevo expediente (ciudadano autenticado)
+const router = Router();
+
 router.post(
   '/',
   authMiddleware,
@@ -19,42 +20,35 @@ router.post(
   ],
   validate,
   (req, res) => {
-    // TODO: implementar ExpedienteController.create
     res.status(501).json({ message: 'Endpoint en construcción.' });
   }
 );
 
-// GET /api/expedientes — Listar expedientes (funcionarios/admin)
 router.get(
   '/',
   authMiddleware,
   authorizeRoles('funcionario', 'admin'),
   (req, res) => {
-    // TODO: implementar ExpedienteController.list
     res.status(501).json({ message: 'Endpoint en construcción.' });
   }
 );
 
-// GET /api/expedientes/:id — Detalle de expediente
 router.get(
   '/:id',
   [param('id').isUUID().withMessage('ID de expediente inválido.')],
   validate,
   (req, res) => {
-    // TODO: implementar ExpedienteController.getById
     res.status(501).json({ message: 'Endpoint en construcción.' });
   }
 );
 
-// GET /api/expedientes/:id/estado — Estado público (sin auth, solo N° + DNI)
 router.get(
   '/:id/estado',
   [param('id').isUUID().withMessage('ID de expediente inválido.')],
   validate,
   (req, res) => {
-    // TODO: implementar ExpedienteController.getEstadoPublico
     res.status(501).json({ message: 'Endpoint en construcción.' });
   }
 );
 
-module.exports = router;
+export default router;

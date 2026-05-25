@@ -1,8 +1,9 @@
-const router = require('express').Router();
-const { body } = require('express-validator');
-const validate = require('../middlewares/validate.middleware');
+import { Router } from 'express';
+import { body } from 'express-validator';
+import validate from '../middlewares/validate.middleware.js';
 
-// POST /api/webhooks/ml-resultado — Recibe resultados del microservicio Python
+const router = Router();
+
 router.post(
   '/ml-resultado',
   [
@@ -14,9 +15,8 @@ router.post(
   ],
   validate,
   (req, res) => {
-    // TODO: implementar WebhookController.mlResultado
     res.status(501).json({ message: 'Endpoint en construcción.' });
   }
 );
 
-module.exports = router;
+export default router;

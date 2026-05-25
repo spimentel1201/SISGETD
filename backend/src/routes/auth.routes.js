@@ -1,8 +1,10 @@
-const router = require('express').Router();
-const { body } = require('express-validator');
-const validate = require('../middlewares/validate.middleware');
+import { Router } from 'express';
+import { body } from 'express-validator';
+import validate from '../middlewares/validate.middleware.js';
+import * as AuthController from '../controllers/auth.controller.js';
 
-// POST /api/auth/register
+const router = Router();
+
 router.post(
   '/register',
   [
@@ -14,13 +16,9 @@ router.post(
       .withMessage('La contraseña debe tener mínimo 8 caracteres.'),
   ],
   validate,
-  (req, res) => {
-    // TODO: implementar AuthController.register
-    res.status(501).json({ message: 'Endpoint en construcción.' });
-  }
+  AuthController.register
 );
 
-// POST /api/auth/login
 router.post(
   '/login',
   [
@@ -29,9 +27,8 @@ router.post(
   ],
   validate,
   (req, res) => {
-    // TODO: implementar AuthController.login
     res.status(501).json({ message: 'Endpoint en construcción.' });
   }
 );
 
-module.exports = router;
+export default router;
