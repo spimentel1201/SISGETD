@@ -3,6 +3,13 @@ import { body, param } from 'express-validator';
 import validate from '../middlewares/validate.middleware.js';
 import { authMiddleware, authorizeRoles } from '../middlewares/auth.middleware.js';
 import upload from '../config/multer.js';
+import { 
+  crearExpediente, 
+  obtenerExpedientes, 
+  obtenerExpedientePorId, 
+  obtenerEstadoExpediente,
+  actualizarEstadoExpediente 
+} from '../controllers/expediente.controller.js';
 
 const router = Router();
 
@@ -19,36 +26,40 @@ router.post(
       .withMessage('El código TUPA es requerido y debe ser un UUID válido.'),
   ],
   validate,
-  (req, res) => {
-    res.status(501).json({ message: 'Endpoint en construcción.' });
-  }
+  crearExpediente
 );
 
 router.get(
   '/',
   authMiddleware,
   authorizeRoles('funcionario', 'admin'),
-  (req, res) => {
-    res.status(501).json({ message: 'Endpoint en construcción.' });
-  }
+  obtenerExpedientes
 );
 
 router.get(
   '/:id',
+  authMiddleware,
   [param('id').isUUID().withMessage('ID de expediente inválido.')],
   validate,
-  (req, res) => {
-    res.status(501).json({ message: 'Endpoint en construcción.' });
-  }
+  obtenerExpedientePorId
 );
 
 router.get(
   '/:id/estado',
-  [param('id').isUUID().withMessage('ID de expediente inválido.')],
+  obtenerEstadoExpediente
+);
+
+router.put(
+  '/:id/estado',
+  authMiddleware,
+  authorizeRoles('funcionario', 'admin'),
+  [
+    param('id').isUUID().withMessage('ID de expediente inválido.'),
+    body('nuevo_estado').optional().isString(),
+    body('observacion').optional().isString()
+  ],
   validate,
-  (req, res) => {
-    res.status(501).json({ message: 'Endpoint en construcción.' });
-  }
+  actualizarEstadoExpediente
 );
 
 export default router;

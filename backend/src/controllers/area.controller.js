@@ -41,7 +41,7 @@ export const actualizarArea = async (req,res)=>{
         message:"No se encontro ninguna area",
      })
    }
-     await area.update({
+     await nuevaArea.update({
         codigo,
         nombre,
         gerencia
@@ -61,19 +61,18 @@ export const actualizarArea = async (req,res)=>{
 export const eliminarArea = async (req,res)=>{
     try{
      const { id } = req.params;
-     const nuevaArea=await Area.findByPk(id);
+     const existeArea=await Area.findByPk(id);
 
-     if(!nuevaArea){
+     if(!existeArea){
       return res.status(404).json({
         message:"No se encontro el area",
      })
    }
 
-     await area.destroy();
+     await existeArea.destroy();
 
      res.status(201).json({
-        message:"Se elimino el Area",
-        area:nuevaArea
+        message:"Se elimino el Area"
      })
 
      }catch(error){

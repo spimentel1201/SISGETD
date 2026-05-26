@@ -2,8 +2,8 @@ import 'dotenv/config';
 import app from './app.js';
 import sequelize from './config/db.js';
 
-// Importar modelos
-import './models/usuario.model.js';
+// Importar modelos y asociaciones
+import './models/index.js';
 
 const PORT = process.env.PORT || 5000;
 
