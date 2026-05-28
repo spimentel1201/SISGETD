@@ -1,0 +1,584 @@
+{
+  "info": {
+    "_postman_id": "sgdml-collection-v1",
+    "name": "SGDML — API Backend (Express + FastAPI)",
+    "description": "Colección completa de endpoints para el Sistema de Gestión Documental con ML — Municipalidad Provincial de Yau.\n\n**Base URL Backend Node:** http://localhost:5000\n**Base URL Microservicio IA:** http://localhost:8000\n\n**Instrucciones:**\n1. Ejecuta primero `POST /api/auth/register` y `POST /api/auth/login`.\n2. Copia el `token` de la respuesta del login.\n3. Pégalo en la variable de colección `{{token}}`.\n4. Todas las rutas protegidas lo usan automáticamente.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5000", "type": "string" },
+    { "key": "python_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "token", "value": "PEGA_TU_JWT_TOKEN_AQUI", "type": "string" },
+    { "key": "expediente_id", "value": "00000000-0000-0000-0000-000000000001", "type": "string" },
+    { "key": "tupa_id", "value": "00000000-0000-0000-0000-000000000002", "type": "string" },
+    { "key": "area_id", "value": "00000000-0000-0000-0000-000000000003", "type": "string" },
+    { "key": "usuario_id", "value": "00000000-0000-0000-0000-000000000004", "type": "string" },
+    { "key": "notificacion_id", "value": "00000000-0000-0000-0000-000000000005", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "🏥 Health Checks",
+      "item": [
+        {
+          "name": "Health — Backend (Node)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Comprueba que el servidor Express esté funcionando."
+          }
+        },
+        {
+          "name": "Health — Microservicio IA (Python)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{python_url}}/health",
+              "host": ["{{python_url}}"],
+              "path": ["health"]
+            },
+            "description": "Comprueba que el servidor FastAPI + Celery esté funcionando."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Registrar usuario (ciudadano)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.token) pm.collectionVariables.set('token', body.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dni\": \"12345678\",\n  \"nombre\": \"Juan Pérez García\",\n  \"email\": \"juan.perez@correo.com\",\n  \"password\": \"Password123\",\n  \"telefono\": \"987654321\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Registra un nuevo ciudadano. Requiere DNI, nombre, email y contraseña (mín. 8 caracteres). Roles disponibles: ciudadano, funcionario, admin."
+          }
+        },
+        {
+          "name": "Iniciar sesión (login)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.token) pm.collectionVariables.set('token', body.token);",
+                  "  console.log('✅ Token guardado correctamente en la variable de colección.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"juan.perez@correo.com\",\n  \"password\": \"Password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Autentica al usuario y retorna un JWT. El test script de Postman guarda el token automáticamente en la variable `{{token}}`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 Expedientes",
+      "item": [
+        {
+          "name": "Crear expediente (con archivo adjunto)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": [],
+                  "description": "PDF, JPEG o PNG. Máximo 20 MB."
+                },
+                {
+                  "key": "asunto",
+                  "value": "Solicitud de licencia de edificación para construcción de vivienda unifamiliar",
+                  "type": "text"
+                },
+                {
+                  "key": "tupa_id",
+                  "value": "{{tupa_id}}",
+                  "type": "text",
+                  "description": "UUID del procedimiento TUPA obtenido de GET /api/tupa"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/expedientes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "expedientes"]
+            },
+            "description": "Crea un nuevo expediente con archivo adjunto (multipart/form-data). El asunto debe tener mínimo 20 caracteres. Requiere autenticación JWT."
+          }
+        },
+        {
+          "name": "Listar todos los expedientes (funcionario/admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/expedientes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "expedientes"]
+            },
+            "description": "Lista todos los expedientes del sistema. Solo accesible para roles `funcionario` y `admin`."
+          }
+        },
+        {
+          "name": "Obtener expediente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/expedientes/{{expediente_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "expedientes", "{{expediente_id}}"]
+            },
+            "description": "Obtiene el detalle completo de un expediente por su UUID. Requiere autenticación."
+          }
+        },
+        {
+          "name": "Consultar estado (público, sin login)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/expedientes/{{expediente_id}}/estado?dni=12345678",
+              "host": ["{{base_url}}"],
+              "path": ["api", "expedientes", "{{expediente_id}}", "estado"],
+              "query": [
+                {
+                  "key": "dni",
+                  "value": "12345678",
+                  "description": "DNI del titular del expediente. Acceso público sin token."
+                }
+              ]
+            },
+            "description": "Endpoint público (no requiere JWT). El ciudadano puede consultar el estado de su trámite usando el número de expediente + DNI."
+          }
+        },
+        {
+          "name": "Actualizar estado del expediente (funcionario/admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nuevo_estado\": \"en_evaluacion\",\n  \"observacion\": \"Expediente derivado a Gerencia de Infraestructura para evaluación técnica.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/expedientes/{{expediente_id}}/estado",
+              "host": ["{{base_url}}"],
+              "path": ["api", "expedientes", "{{expediente_id}}", "estado"]
+            },
+            "description": "Actualiza el estado del expediente y registra el cambio en historial_estados. Estados válidos: ingresado, en_validacion, requiere_triaje, derivado, en_evaluacion, resuelto, archivado. Solo funcionario/admin."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 TUPA — Procedimientos",
+      "item": [
+        {
+          "name": "Listar procedimientos TUPA (público)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/tupa",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tupa"]
+            },
+            "description": "Lista todos los trámites TUPA activos. Endpoint público — el ciudadano lo usa para elegir el tipo de trámite al crear su expediente."
+          }
+        },
+        {
+          "name": "Registrar trámite TUPA (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_tupa\": \"TUPA-006\",\n  \"nombre_tramite\": \"Certificado de Numeración y Nomenclatura\",\n  \"dias_plazo_legal\": 7,\n  \"tipo_silencio\": \"positivo\",\n  \"area_responsable_id\": \"{{area_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tupa",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tupa"]
+            },
+            "description": "Registra un nuevo procedimiento en el catálogo TUPA. `tipo_silencio` acepta: positivo, negativo, automatico. Solo rol `admin`."
+          }
+        },
+        {
+          "name": "Actualizar trámite TUPA (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre_tramite\": \"Certificado de Numeración Oficial\",\n  \"dias_plazo_legal\": 5,\n  \"tipo_silencio\": \"negativo\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tupa/{{tupa_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tupa", "{{tupa_id}}"]
+            },
+            "description": "Actualiza los datos de un trámite TUPA. Solo rol `admin`."
+          }
+        },
+        {
+          "name": "Desactivar trámite TUPA (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tupa/{{tupa_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tupa", "{{tupa_id}}"]
+            },
+            "description": "Borrado lógico del trámite TUPA (lo desactiva, no lo elimina físicamente de la BD). Solo rol `admin`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏢 Áreas",
+      "item": [
+        {
+          "name": "Listar áreas (público)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/areas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "areas"]
+            },
+            "description": "Retorna todas las áreas/gerencias registradas. Endpoint público."
+          }
+        },
+        {
+          "name": "Registrar área (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"GTI\",\n  \"nombre\": \"Gerencia de Tecnologías de Información\",\n  \"gerencia\": \"Gerencia Municipal\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/areas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "areas"]
+            },
+            "description": "Registra una nueva área/gerencia. Solo rol `admin`."
+          }
+        },
+        {
+          "name": "Actualizar área (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Gerencia de Infraestructura y Desarrollo Urbano\",\n  \"gerencia\": \"Alcaldía\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/areas/{{area_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "areas", "{{area_id}}"]
+            },
+            "description": "Actualiza los datos de un área. Solo rol `admin`."
+          }
+        },
+        {
+          "name": "Eliminar área (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/areas/{{area_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "areas", "{{area_id}}"]
+            },
+            "description": "Borrado lógico de un área. Solo rol `admin`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Usuarios",
+      "item": [
+        {
+          "name": "Listar usuarios (admin/funcionario)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios",
+              "host": ["{{base_url}}"],
+              "path": ["api", "usuarios"]
+            },
+            "description": "Lista todos los usuarios del sistema. Accesible para roles `admin` y `funcionario`."
+          }
+        },
+        {
+          "name": "Asignar área a un funcionario (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"area_id\": \"{{area_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/{{usuario_id}}/area",
+              "host": ["{{base_url}}"],
+              "path": ["api", "usuarios", "{{usuario_id}}", "area"]
+            },
+            "description": "Asigna (o desasigna, enviando `area_id: null`) un área a un funcionario. Solo rol `admin`."
+          }
+        },
+        {
+          "name": "Desactivar usuario (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/{{usuario_id}}/desactivar",
+              "host": ["{{base_url}}"],
+              "path": ["api", "usuarios", "{{usuario_id}}", "desactivar"]
+            },
+            "description": "Borrado lógico de un usuario (lo marca como inactivo). Solo rol `admin`."
+          }
+        },
+        {
+          "name": "Reactivar usuario (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/{{usuario_id}}/reactivar",
+              "host": ["{{base_url}}"],
+              "path": ["api", "usuarios", "{{usuario_id}}", "reactivar"]
+            },
+            "description": "Reactiva un usuario previamente desactivado. Solo rol `admin`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔔 Notificaciones",
+      "item": [
+        {
+          "name": "Obtener mis notificaciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notificaciones",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notificaciones"]
+            },
+            "description": "Retorna todas las notificaciones del usuario autenticado (filtrado automáticamente por JWT)."
+          }
+        },
+        {
+          "name": "Marcar notificación como leída",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notificaciones/{{notificacion_id}}/leido",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notificaciones", "{{notificacion_id}}", "leido"]
+            },
+            "description": "Marca una notificación específica como leída. Solo el propietario puede marcarla."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Dashboard",
+      "item": [
+        {
+          "name": "Obtener KPIs gerenciales",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/kpis",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "kpis"]
+            },
+            "description": "Retorna métricas globales: expedientes totales, tiempo promedio de resolución, tasa de silencio administrativo. Roles: `funcionario`, `admin`."
+          }
+        },
+        {
+          "name": "Listar expedientes críticos (semáforo rojo)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/expedientes-criticos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "expedientes-criticos"]
+            },
+            "description": "Lista los expedientes que vencen en menos de 3 días hábiles (semáforo rojo). Ordenados por `score_prioridad DESC`. Roles: `funcionario`, `admin`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🤖 Webhook — Microservicio IA",
+      "item": [
+        {
+          "name": "Recibir resultado ML (interno)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expediente_id\": \"{{expediente_id}}\",\n  \"tupa_id\": \"{{tupa_id}}\",\n  \"codigo_tupa\": \"TUPA-001\",\n  \"area_asignada_id\": \"{{area_id}}\",\n  \"ia_confianza\": 0.87,\n  \"score_prioridad\": 65.5,\n  \"texto_extraido\": \"Solicitud de licencia de edificación para construcción de vivienda unifamiliar en la urbanización Los Pinos...\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/ml-resultado",
+              "host": ["{{base_url}}"],
+              "path": ["api", "webhooks", "ml-resultado"]
+            },
+            "description": "⚙️ Endpoint interno. Normalmente lo llama el Celery Worker del microservicio Python al terminar el OCR + clasificación. Se puede probar manualmente para simular el resultado de la IA. Actualiza el expediente con la clasificación TUPA, área asignada y score de prioridad."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🐍 Microservicio IA (FastAPI)",
+      "item": [
+        {
+          "name": "Clasificar documento manualmente",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expediente_id\": \"{{expediente_id}}\",\n  \"texto\": \"Solicito una licencia de edificación para construcción de vivienda unifamiliar con un área de 120 m2\"\n}"
+            },
+            "url": {
+              "raw": "{{python_url}}/ml/clasificar",
+              "host": ["{{python_url}}"],
+              "path": ["ml", "clasificar"]
+            },
+            "description": "Envía texto directamente al microservicio Python para clasificación TUPA manual. Retorna tupa_id, area_asignada_id, ia_confianza y score_prioridad."
+          }
+        },
+        {
+          "name": "Calcular prioridad manualmente",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expediente_id\": \"{{expediente_id}}\",\n  \"fecha_ingreso\": \"2026-05-15T08:00:00\",\n  \"dias_plazo_legal\": 15\n}"
+            },
+            "url": {
+              "raw": "{{python_url}}/ml/priorizar",
+              "host": ["{{python_url}}"],
+              "path": ["ml", "priorizar"]
+            },
+            "description": "Calcula el score_prioridad de un expediente dado su fecha de ingreso y el plazo legal del trámite TUPA asignado."
+          }
+        }
+      ]
+    }
+  ]
+}
