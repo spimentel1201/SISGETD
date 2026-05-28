@@ -130,7 +130,12 @@ export const obtenerExpedientePorId = async (req, res) => {
 export const obtenerEstadoExpediente = async (req, res) => {
   try {
     const { id } = req.params;
+    const { dni } = req.query;
     
+    if (!dni) {
+      return res.status(400).json({ message: 'El DNI del titular es obligatorio para consultar el estado.' });
+    }
+
     // Puede buscarse por id (UUID) o numero_expediente
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
     
@@ -140,6 +145,12 @@ export const obtenerEstadoExpediente = async (req, res) => {
       where: whereClause,
       attributes: ['id', 'numero_expediente', 'estado', 'fecha_ingreso', 'fecha_limite'],
       include: [
+        { 
+          model: Usuario, 
+          as: 'ciudadano', 
+          attributes: ['dni'],
+          where: { dni }
+        },
         { model: Area, as: 'area_asignada', attributes: ['nombre'] },
         { 
           model: HistorialEstado, 
@@ -175,6 +186,15 @@ export const actualizarEstadoExpediente = async (req, res) => {
     }
 
     const estadoAnterior = expediente.estado;
+
+    // Regla S05: Si se quiere derivar o cambiar área asignada, el expediente debe estar en sus estados iniciales.
+    if (area_asignada_id && area_asignada_id !== expediente.area_asignada_id) {
+      const estadosPermitidosParaDerivar = ['ingresado', 'en_validacion', 'recibido', 'requiere_triaje', 'procesando'];
+      if (!estadosPermitidosParaDerivar.includes(estadoAnterior)) {
+         await t.rollback();
+         return res.status(403).json({ message: 'No se puede reasignar el área en esta etapa del expediente.' });
+      }
+    }
 
     // Actualizar campos del expediente
     if (nuevo_estado) expediente.estado = nuevo_estado;

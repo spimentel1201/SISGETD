@@ -27,6 +27,11 @@ const TupaProcedimiento = sequelize.define('TupaProcedimiento', {
   area_responsable_id: {
     type: DataTypes.UUID,
     allowNull: false,
+  },
+  es_activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
   }
 }, {
   tableName: 'tupa_procedimientos',

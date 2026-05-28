@@ -12,8 +12,8 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅ Conexión a la base de datos establecida con Sequelize.');
     
-    // Sincronizar modelos con la base de datos (crea tablas si no existen)
-    await sequelize.sync();
+    // Sincronizar modelos con la base de datos (crea tablas si no existen, o las altera si es necesario en dev)
+    await sequelize.sync({ alter: true });
     console.log('✅ Modelos sincronizados con la base de datos.');
 
     app.listen(PORT, () => {

@@ -32,6 +32,11 @@ const Usuario = sequelize.define('Usuario', {
   hash_password: {
     type: DataTypes.TEXT,
     allowNull: false,
+  },
+  es_activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
   }
 }, {
   tableName: 'usuarios',

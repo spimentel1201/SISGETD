@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import validate from '../middlewares/validate.middleware.js';
 import { authMiddleware, authorizeRoles } from '../middlewares/auth.middleware.js';
 import upload from '../config/multer.js';
@@ -46,6 +46,10 @@ router.get(
 
 router.get(
   '/:id/estado',
+  [
+    query('dni').notEmpty().withMessage('El DNI del titular es obligatorio.').isLength({ min: 8, max: 11 }).withMessage('DNI inválido.')
+  ],
+  validate,
   obtenerEstadoExpediente
 );
 

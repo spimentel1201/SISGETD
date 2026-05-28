@@ -1,81 +1,71 @@
 import Area from '../models/area.model.js';
 
-export const registrarArea = async (req,res)=>{
-    try{
-     const{codigo,nombre,gerencia}=req.body
-     const nuevaArea=await Area.create({
-        codigo,nombre,gerencia
-     })
-     res.status(201).json({
-        message:"Se registro el Area",
-        area:nuevaArea
-     })
+export const registrarArea = async (req, res) => {
+  try {
+    const { codigo, nombre, gerencia } = req.body;
 
-     }catch(error){
-        console.log(error)
+    if (!codigo || !nombre || !gerencia) {
+      return res.status(400).json({ message: 'Los campos codigo, nombre y gerencia son obligatorios.' });
     }
-}
 
-export const listarArea = async (req,res)=>{
-    try{
-     
-     const listadeArea=await Area.findAll();
-     res.status(201).json({
-        message:"Se registro el Area",
-        area:listadeArea
-     })
+    const existe = await Area.findOne({ where: { codigo } });
+    if (existe) {
+      return res.status(409).json({ message: `Ya existe un área con el código '${codigo}'.` });
+    }
 
-     }catch(error){
-        console.log(error)
-     }
-}
+    const nuevaArea = await Area.create({ codigo, nombre, gerencia });
+    res.status(201).json({ message: 'Área registrada correctamente.', area: nuevaArea });
+  } catch (error) {
+    console.error('Error al registrar área:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
 
-export const actualizarArea = async (req,res)=>{
-    try{
-     const { id } = req.params;
-     const{codigo,nombre,gerencia}=req.body
-     const nuevaArea=await Area.findByPk(id);
+export const listarArea = async (req, res) => {
+  try {
+    const soloActivas = req.query.activas !== 'false';
+    const whereClause = soloActivas ? { es_activo: true } : {};
 
-   if(!nuevaArea){
-      return res.status(404).json({
-        message:"No se encontro ninguna area",
-     })
-   }
-     await nuevaArea.update({
-        codigo,
-        nombre,
-        gerencia
-   });
+    const areas = await Area.findAll({ where: whereClause, order: [['nombre', 'ASC']] });
+    res.status(200).json(areas);
+  } catch (error) {
+    console.error('Error al listar áreas:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
 
+export const actualizarArea = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { codigo, nombre, gerencia } = req.body;
 
-     res.status(201).json({
-        message:"Se actualizo el Area",
-        area:nuevaArea
-     })
+    const area = await Area.findByPk(id);
+    if (!area) {
+      return res.status(404).json({ message: 'Área no encontrada.' });
+    }
 
-     }catch(error){
-        console.log(error)
-     }
-}
+    await area.update({ codigo, nombre, gerencia });
+    res.status(200).json({ message: 'Área actualizada correctamente.', area });
+  } catch (error) {
+    console.error('Error al actualizar área:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
 
-export const eliminarArea = async (req,res)=>{
-    try{
-     const { id } = req.params;
-     const existeArea=await Area.findByPk(id);
+// Borrado lógico: marca como inactiva, no elimina físicamente
+export const eliminarArea = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const area = await Area.findByPk(id);
 
-     if(!existeArea){
-      return res.status(404).json({
-        message:"No se encontro el area",
-     })
-   }
+    if (!area) {
+      return res.status(404).json({ message: 'Área no encontrada.' });
+    }
 
-     await existeArea.destroy();
-
-     res.status(201).json({
-        message:"Se elimino el Area"
-     })
-
-     }catch(error){
-        console.log(error)
-     }
-}
+    await area.update({ es_activo: false });
+    res.status(200).json({ message: 'Área desactivada correctamente.' });
+  } catch (error) {
+    console.error('Error al desactivar área:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};

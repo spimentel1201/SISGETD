@@ -31,6 +31,11 @@ const Notificacion = sequelize.define('Notificacion', {
   fecha_envio: {
     type: DataTypes.DATE,
     allowNull: true,
+  },
+  leido: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
   }
 }, {
   tableName: 'notificaciones',
