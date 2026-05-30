@@ -5,7 +5,8 @@ from celery_app import celery_app
 from app.utils import clasificar_documento_semantico, calcular_score_prioridad
 
 # Configuración del webhook a través de variables de entorno
-NODE_WEBHOOK_URL = os.getenv("NODE_WEBHOOK_URL", "http://localhost:5000/api/webhooks/ml-resultado")
+NODE_BACKEND_URL = os.getenv("NODE_BACKEND_URL", "http://localhost:5000")
+NODE_WEBHOOK_URL = os.getenv("NODE_WEBHOOK_URL", f"{NODE_BACKEND_URL}/api/webhooks/ml-resultado")
 
 @celery_app.task(name="clasificador.procesar", bind=True, max_retries=3)
 def clasificar_expediente(self, expediente_id: str, texto: str):

@@ -1,9 +1,13 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 try:
     import cv2
 except ImportError:
     cv2 = None
 import re
 import os
+import io
 import numpy as np
 from datetime import datetime, timedelta
 import PIL.Image
@@ -26,10 +30,17 @@ except Exception:
 # Intentar importar pytesseract
 try:
     import pytesseract
-    # En entornos Windows, a veces es necesario apuntar al ejecutable de Tesseract si no está en PATH
-    # pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    tesseract_env = os.getenv("TESSERACT_CMD")
+    if tesseract_env:
+        pytesseract.pytesseract.tesseract_cmd = tesseract_env
 except ImportError:
     pytesseract = None
+
+# Intentar importar pypdf
+try:
+    import pypdf
+except ImportError:
+    pypdf = None
 
 # Intentar importar SentenceTransformers para clasificación semántica inteligente
 try:
@@ -41,66 +52,207 @@ except Exception as e:
     MODELO_SEMANTICO = None
     print(f"[IA Warning] No se pudo cargar SentenceTransformers ({e}). Se usará clasificador de contingencia.")
 
-# Catálogo mock de trámites TUPA y sus gerencias responsables para el MVP
-TUPA_CATALOGO = [
+# Catálogo TUPA de contingencia (coincide con seed_tupas.js y sus UUIDs reales)
+FALLBACK_TUPA_CATALOGO = [
     {
-        "id": "tupa-001",
-        "codigo_tupa": "TUPA-001",
-        "nombre_tramite": "Licencia de Edificación, Ampliación o Demolición de Viviendas",
-        "dias_plazo_legal": 15,
-        "area_responsable_id": "area-gidu", # Gerencia de Infraestructura y Desarrollo Urbano
-        "palabras_clave": ["edificacion", "construccion", "ampliacion", "demolicion", "plano", "licencia", "obra", "vivienda"]
+        "id": "527680f4-1c8b-40c4-81e7-cdbaa5cea90b",
+        "codigo_tupa": "DOC-001",
+        "nombre_tramite": "Formulario Unico de Tramite (FUT) o Solicitud Simple",
+        "dias_plazo_legal": 1,
+        "area_responsable_id": "99ec2363-70e0-4ac7-a4c9-1621d5f812a9",
+        "palabras_clave": ["formulario", "unico", "tramite", "fut", "solicitud", "simple"]
     },
     {
-        "id": "tupa-002",
-        "codigo_tupa": "TUPA-002",
-        "nombre_tramite": "Autorización para la Instalación de Anuncios y Publicidad Comercial",
-        "dias_plazo_legal": 10,
-        "area_responsable_id": "area-gde", # Gerencia de Desarrollo Económico
-        "palabras_clave": ["anuncio", "publicidad", "panel", "letrero", "propaganda", "comercial", "cartel"]
+        "id": "baaf2591-4fd1-4b97-b710-e247859e541c",
+        "codigo_tupa": "DOC-002",
+        "nombre_tramite": "Oficios y Cartas de Instituciones Externas",
+        "dias_plazo_legal": 0,
+        "area_responsable_id": "5aeac95f-4f74-4e9e-a138-92d0158a6dcc",
+        "palabras_clave": ["oficios", "cartas", "instituciones", "externas", "oficio", "carta"]
     },
     {
-        "id": "tupa-003",
-        "codigo_tupa": "TUPA-003",
-        "nombre_tramite": "Licencia de Funcionamiento de Establecimientos Comerciales e Industriales",
-        "dias_plazo_legal": 15,
-        "area_responsable_id": "area-gde", # Gerencia de Desarrollo Económico
-        "palabras_clave": ["funcionamiento", "licencia", "negocio", "local", "comercio", "tienda", "establecimiento", "giro"]
-    },
-    {
-        "id": "tupa-004",
-        "codigo_tupa": "TUPA-004",
-        "nombre_tramite": "Certificado de Parámetros Urbanísticos y Edificatorios",
-        "dias_plazo_legal": 5,
-        "area_responsable_id": "area-gidu", # Gerencia de Infraestructura y Desarrollo Urbano
-        "palabras_clave": ["parametros", "urbanisticos", "zonificacion", "certificado", "altura", "retiro", "lote"]
-    },
-    {
-        "id": "tupa-005",
-        "codigo_tupa": "TUPA-005",
-        "nombre_tramite": "Duplicado de Carné de Sanidad y Control Metropolitano",
+        "id": "ad27fb7b-8461-4842-b03f-856256fa7f74",
+        "codigo_tupa": "TUP-001",
+        "nombre_tramite": "Licencia de Funcionamiento - Nivel de riesgo bajo",
         "dias_plazo_legal": 2,
-        "area_responsable_id": "area-gds", # Gerencia de Desarrollo Social / Servicios a la Ciudad
-        "palabras_clave": ["carne", "sanidad", "salud", "duplicado", "manipulador", "alimentos", "medico"]
+        "area_responsable_id": "9094a739-9f22-4dc6-ba76-d583fee4d191",
+        "palabras_clave": ["licencia", "funcionamiento", "riesgo", "bajo", "negocio", "comercio", "tienda"]
+    },
+    {
+        "id": "9d057666-2b74-41c0-a8d2-8cf619c0ff81",
+        "codigo_tupa": "TUP-002",
+        "nombre_tramite": "Licencia de Funcionamiento - Nivel de riesgo alto o muy alto",
+        "dias_plazo_legal": 8,
+        "area_responsable_id": "9094a739-9f22-4dc6-ba76-d583fee4d191",
+        "palabras_clave": ["licencia", "funcionamiento", "riesgo", "alto", "muy", "negocio", "comercio", "tienda"]
+    },
+    {
+        "id": "cfacc99c-efa5-4f52-80cd-b1cd36bee5af",
+        "codigo_tupa": "TUP-003",
+        "nombre_tramite": "Inspeccion Tecnica de Seguridad en Edificaciones (ITSE)",
+        "dias_plazo_legal": 7,
+        "area_responsable_id": "0448dd7c-46fc-4fdc-98dd-be55e2700bb5",
+        "palabras_clave": ["inspeccion", "tecnica", "seguridad", "edificaciones", "itse", "defensa", "civil"]
+    },
+    {
+        "id": "83f9ff60-d481-46d1-bc72-0d79e24cdc44",
+        "codigo_tupa": "TUP-004",
+        "nombre_tramite": "Licencia de Edificacion Modalidad A",
+        "dias_plazo_legal": 1,
+        "area_responsable_id": "ecf3abf0-8627-4a55-b9ce-3e2a143f7f97",
+        "palabras_clave": ["licencia", "edificacion", "modalidad", "construccion", "obra"]
+    },
+    {
+        "id": "6dcfd029-5634-46b3-ada8-1b720fe51b6e",
+        "codigo_tupa": "TUP-005",
+        "nombre_tramite": "Licencia de Edificacion Modalidad B, C y D",
+        "dias_plazo_legal": 15,
+        "area_responsable_id": "ecf3abf0-8627-4a55-b9ce-3e2a143f7f97",
+        "palabras_clave": ["licencia", "edificacion", "modalidad", "construccion", "obra"]
+    },
+    {
+        "id": "5914c57d-7497-4819-b482-c7af22f0788b",
+        "codigo_tupa": "TUP-006",
+        "nombre_tramite": "Constancia de posesion de terrenos",
+        "dias_plazo_legal": 15,
+        "area_responsable_id": "ecf3abf0-8627-4a55-b9ce-3e2a143f7f97",
+        "palabras_clave": ["constancia", "posesion", "terrenos", "terreno", "propiedad", "lote"]
+    },
+    {
+        "id": "70445be4-6de0-4f9b-834b-81c15f43ac6e",
+        "codigo_tupa": "TUP-007",
+        "nombre_tramite": "Licencia de Conducir para Vehiculos Menores Motorizados",
+        "dias_plazo_legal": 5,
+        "area_responsable_id": "ecf3abf0-8627-4a55-b9ce-3e2a143f7f97",
+        "palabras_clave": ["licencia", "conducir", "vehiculos", "menores", "motorizados", "moto", "brevete"]
+    },
+    {
+        "id": "de3bccbc-9a65-4903-97cc-fce1ae07a372",
+        "codigo_tupa": "TUP-008",
+        "nombre_tramite": "Nulidad de papeletas de infracciones de transito",
+        "dias_plazo_legal": 30,
+        "area_responsable_id": "7a6bb509-a9ae-4e79-8211-563ef25ffbd0",
+        "palabras_clave": ["nulidad", "papeletas", "infracciones", "transito", "papeleta", "multa", "descargo"]
+    },
+    {
+        "id": "149df240-3667-4ed7-a986-64089e0af630",
+        "codigo_tupa": "TUP-009",
+        "nombre_tramite": "Inscripcion de actas de nacimiento",
+        "dias_plazo_legal": 1,
+        "area_responsable_id": "99ec2363-70e0-4ac7-a4c9-1621d5f812a9",
+        "palabras_clave": ["inscripcion", "actas", "nacimiento", "acta", "partida", "bebe", "hijo"]
+    },
+    {
+        "id": "abe4b4c8-1642-4e00-ae45-fd4ea4596faa",
+        "codigo_tupa": "TUP-010",
+        "nombre_tramite": "Suspension de cobranza coactiva",
+        "dias_plazo_legal": 15,
+        "area_responsable_id": "7a6bb509-a9ae-4e79-8211-563ef25ffbd0",
+        "palabras_clave": ["suspension", "cobranza", "coactiva", "coactivo", "deuda", "embargo"]
     }
 ]
+
+def cargar_catalogo_desde_db():
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        return FALLBACK_TUPA_CATALOGO
+    
+    conn = None
+    try:
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cur = conn.cursor()
+        cur.execute("SELECT id, codigo_tupa, nombre_tramite, dias_plazo_legal, area_responsable_id FROM tupa_procedimientos WHERE es_activo = TRUE;")
+        rows = cur.fetchall()
+        
+        if not rows:
+            cur.close()
+            conn.close()
+            return FALLBACK_TUPA_CATALOGO
+            
+        catalogo = []
+        for r in rows:
+            tupa_id, codigo_tupa, nombre_tramite, dias_plazo, area_id = r
+            # Generar palabras clave dinámicas
+            cleaned = limpiar_texto(nombre_tramite)
+            palabras_clave = list(set(cleaned.split()))
+            
+            catalogo.append({
+                "id": str(tupa_id),
+                "codigo_tupa": codigo_tupa,
+                "nombre_tramite": nombre_tramite,
+                "dias_plazo_legal": dias_plazo,
+                "area_responsable_id": str(area_id),
+                "palabras_clave": palabras_clave
+            })
+            
+        cur.close()
+        conn.close()
+        print(f"[DB INFO] Catálogo TUPA cargado dinámicamente de la DB ({len(catalogo)} trámites).")
+        return catalogo
+    except Exception as e:
+        print(f"[DB WARNING] Error cargando catálogo de DB ({e}). Usando fallback estático.")
+        if conn:
+            conn.close()
+        return FALLBACK_TUPA_CATALOGO
 
 
 def extraer_texto_ocr(image_path: str) -> str:
     """
-    Descarga o abre una imagen, le aplica preprocesamiento básico mediante OpenCV
-    para mejorar el contraste y extrae el texto usando PyTesseract.
+    Extrae el texto de un archivo PDF (digital o escaneado) o de una imagen (usando OCR).
     """
-    if pytesseract is None:
-        raise ImportError("pytesseract no está instalado en el entorno actual.")
-        
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"El archivo {image_path} no existe.")
+
+    # Si es un archivo PDF, procesarlo correspondientemente
+    if image_path.lower().endswith('.pdf'):
+        texto_pdf = ""
+        if pypdf is not None:
+            try:
+                reader = pypdf.PdfReader(image_path)
+                paginas_texto = []
+                for page in reader.pages:
+                    t = page.extract_text()
+                    if t:
+                        paginas_texto.append(t)
+                texto_pdf = "\n".join(paginas_texto).strip()
+            except Exception as e:
+                print(f"[PDF Error] No se pudo extraer texto digital del PDF: {e}")
+        
+        if texto_pdf:
+            return texto_pdf
+
+        # Si no se extrajo texto (puede ser PDF escaneado), intentar extraer imágenes y hacerles OCR
+        if pypdf is not None and pytesseract is not None:
+            print("[OCR] PDF digital vacío. Intentando OCR sobre imágenes embebidas...")
+            try:
+                reader = pypdf.PdfReader(image_path)
+                texto_imagenes = []
+                for page in reader.pages:
+                    for image_file_object in page.images:
+                        try:
+                            with PIL.Image.open(io.BytesIO(image_file_object.data)) as img_obj:
+                                t = pytesseract.image_to_string(img_obj, lang="spa")
+                                if t:
+                                    texto_imagenes.append(t)
+                        except Exception as img_err:
+                            print(f"[OCR Warning] No se pudo procesar imagen del PDF: {img_err}")
+                texto_ocr_pdf = "\n".join(texto_imagenes).strip()
+                if texto_ocr_pdf:
+                    return texto_ocr_pdf
+            except Exception as e:
+                print(f"[PDF OCR Error] Error al extraer imágenes e interactuar con Tesseract: {e}")
+
+        raise ValueError("El archivo PDF no contiene texto legible digitalmente ni imágenes procesables por OCR.")
+
+    # Procesar como imagen convencional
+    if pytesseract is None:
+        raise ImportError("pytesseract no está instalado en el entorno actual.")
 
     # 1. Cargar imagen con OpenCV (si está disponible)
     img = cv2.imread(image_path) if cv2 is not None else None
     if img is None:
-        # Si OpenCV falla (por ejemplo, formato no soportado), intentar con PIL directamente
+        # Si OpenCV falla, intentar con PIL directamente
         try:
             with PIL.Image.open(image_path) as pil_img:
                 return pytesseract.image_to_string(pil_img, lang="spa").strip()
@@ -138,6 +290,9 @@ def limpiar_texto(texto: str) -> str:
     palabras_filtradas = [w for w in palabras if w not in SPANISH_STOPWORDS]
     
     return " ".join(palabras_filtradas)
+
+# Cargar catálogo dinámicamente
+TUPA_CATALOGO = cargar_catalogo_desde_db()
 
 
 def clasificar_contingencia_keywords(texto_limpio: str) -> dict:
