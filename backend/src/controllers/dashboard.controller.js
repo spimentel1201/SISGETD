@@ -10,7 +10,7 @@ export const getKPIs = async (req, res) => {
     const cargaPorArea = await Expediente.findAll({
       attributes: [
         'area_asignada_id',
-        [sequelize.fn('COUNT', sequelize.col('id')), 'total']
+        [sequelize.fn('COUNT', sequelize.col('Expediente.id')), 'total']
       ],
       include: [{ model: Area, as: 'area_asignada', attributes: ['nombre'] }],
       group: ['area_asignada_id', 'area_asignada.id']

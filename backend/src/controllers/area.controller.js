@@ -34,6 +34,20 @@ export const listarArea = async (req, res) => {
   }
 };
 
+export const obtenerAreaPorId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const area = await Area.findByPk(id);
+    if (!area) {
+      return res.status(404).json({ message: 'Área no encontrada.' });
+    }
+    res.status(200).json(area);
+  } catch (error) {
+    console.error('Error al obtener área:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
 export const actualizarArea = async (req, res) => {
   try {
     const { id } = req.params;

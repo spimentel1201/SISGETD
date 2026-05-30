@@ -14,6 +14,31 @@ router.get(
   UsuarioController.listarUsuarios
 );
 
+// Obtener usuario por ID
+router.get(
+  '/:id',
+  authMiddleware,
+  authorizeRoles('admin', 'funcionario'),
+  [param('id').isUUID().withMessage('ID de usuario inválido.')],
+  validate,
+  UsuarioController.obtenerUsuarioPorId
+);
+
+// Actualizar usuario
+router.put(
+  '/:id',
+  authMiddleware,
+  authorizeRoles('admin'),
+  [
+    param('id').isUUID().withMessage('ID de usuario inválido.'),
+    body('nombre').optional().notEmpty().withMessage('El nombre no puede estar vacío.'),
+    body('email').optional().isEmail().withMessage('Email inválido.'),
+    body('rol').optional().isIn(['admin', 'funcionario', 'ciudadano']).withMessage('Rol inválido.')
+  ],
+  validate,
+  UsuarioController.actualizarUsuario
+);
+
 // Asignar área a un funcionario
 router.patch(
   '/:id/area',

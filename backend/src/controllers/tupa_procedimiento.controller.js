@@ -36,12 +36,28 @@ export const listarTupas = async (req, res) => {
 
     const tupas = await TupaProcedimiento.findAll({
       where: whereClause,
-      include: [{ model: Area, attributes: ['id', 'codigo', 'nombre_tramite'] }],
+      include: [{ model: Area, attributes: ['id', 'codigo', 'nombre'] }],
       order: [['nombre_tramite', 'ASC']]
     });
     res.status(200).json(tupas);
   } catch (error) {
     console.error('Error al listar TUPAs:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
+export const obtenerTupaPorId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tupa = await TupaProcedimiento.findByPk(id, {
+      include: [{ model: Area, attributes: ['id', 'codigo', 'nombre'] }]
+    });
+    if (!tupa) {
+      return res.status(404).json({ message: 'Procedimiento TUPA no encontrado.' });
+    }
+    res.status(200).json(tupa);
+  } catch (error) {
+    console.error('Error al obtener TUPA:', error);
     res.status(500).json({ message: 'Error interno del servidor.' });
   }
 };

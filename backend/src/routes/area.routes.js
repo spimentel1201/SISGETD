@@ -9,6 +9,14 @@ const router = Router();
 // Listar áreas (público: para asignar en formularios)
 router.get('/', AreaController.listarArea);
 
+// Obtener área por ID (público)
+router.get(
+  '/:id',
+  [param('id').isUUID().withMessage('ID de área inválido.')],
+  validate,
+  AreaController.obtenerAreaPorId
+);
+
 // Crear área (solo admin)
 router.post(
   '/',

@@ -6,8 +6,16 @@ import * as TupaController from '../controllers/tupa_procedimiento.controller.js
 
 const router = Router();
 
-// Listar TUPAs activos (público, para que el ciudadano elija al crear expediente)
+// Listar procedimientos TUPA (público: para consultar y formularios)
 router.get('/', TupaController.listarTupas);
+
+// Obtener TUPA por ID (público)
+router.get(
+  '/:id',
+  [param('id').isUUID().withMessage('ID de TUPA inválido.')],
+  validate,
+  TupaController.obtenerTupaPorId
+);
 
 // Las siguientes rutas solo para admin
 router.post(

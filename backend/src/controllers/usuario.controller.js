@@ -20,6 +20,56 @@ export const listarUsuarios = async (req, res) => {
   }
 };
 
+// GET /api/usuarios/:id — Obtener usuario por ID
+export const obtenerUsuarioPorId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const usuario = await Usuario.findByPk(id, {
+      attributes: { exclude: ['hash_password'] },
+      include: [{ model: Area, attributes: ['id', 'nombre'] }]
+    });
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+    res.status(200).json(usuario);
+  } catch (error) {
+    console.error('Error al obtener usuario:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
+// PUT /api/usuarios/:id — Actualizar usuario (solo admin)
+export const actualizarUsuario = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre, email, rol, area_id } = req.body;
+
+    const usuario = await Usuario.findByPk(id);
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    if (area_id) {
+      const area = await Area.findByPk(area_id);
+      if (!area || !area.es_activo) {
+        return res.status(404).json({ message: 'El área no existe o está inactiva.' });
+      }
+    }
+
+    await usuario.update({ nombre, email, rol, area_id: area_id || null });
+    
+    const usuarioActualizado = await Usuario.findByPk(id, {
+      attributes: { exclude: ['hash_password'] },
+      include: [{ model: Area, attributes: ['id', 'nombre'] }]
+    });
+
+    res.status(200).json({ message: 'Usuario actualizado correctamente.', usuario: usuarioActualizado });
+  } catch (error) {
+    console.error('Error al actualizar usuario:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
 // PATCH /api/usuarios/:id/area — Asignar funcionario a un área
 export const asignarArea = async (req, res) => {
   try {
