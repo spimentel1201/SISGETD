@@ -231,3 +231,69 @@ export const actualizarEstadoExpediente = async (req, res) => {
     res.status(500).json({ message: 'Error interno del servidor al actualizar el expediente.' });
   }
 };
+
+// Crear expediente público — ciudadano sin cuenta registrada
+// Crea un usuario temporal con los datos del formulario si no existe
+export const crearExpedientePublico = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { tupa_id, asunto, nombre, dni, email, telefono } = req.body;
+    const archivo_url = req.file ? req.file.path : null;
+
+    if (!tupa_id || !asunto || !nombre || !dni || !email) {
+      await t.rollback();
+      return res.status(400).json({ message: 'Campos obligatorios: tupa_id, asunto, nombre, dni, email.' });
+    }
+
+    // Buscar o crear usuario ciudadano por DNI
+    let usuario = await Usuario.findOne({ where: { dni } });
+    if (!usuario) {
+      const bcrypt = await import('bcryptjs');
+      const tempPassword = await bcrypt.default.hash(dni + Date.now(), 10);
+      usuario = await Usuario.create({
+        dni,
+        nombre,
+        email,
+        hash_password: tempPassword,
+        rol: 'ciudadano',
+      }, { transaction: t });
+    }
+
+    const numero_expediente = await generarNumeroExpediente();
+
+    const nuevoExpediente = await Expediente.create({
+      numero_expediente,
+      usuario_id: usuario.id,
+      tupa_id,
+      estado: 'en_validacion',
+      archivo_url,
+      fecha_ingreso: new Date(),
+    }, { transaction: t });
+
+    await HistorialEstado.create({
+      expediente_id: nuevoExpediente.id,
+      estado_anterior: null,
+      estado_nuevo: 'en_validacion',
+      usuario_id: usuario.id,
+      observacion: `Ingreso público. Asunto: ${asunto}`,
+    }, { transaction: t });
+
+    await t.commit();
+
+    await publishMessage('expedientes.procesar', {
+      expediente_id: nuevoExpediente.id,
+      archivo_url,
+    }).catch(() => {});
+
+    res.status(201).json({
+      message: 'Trámite recibido correctamente.',
+      numero_expediente,
+      expediente_id: nuevoExpediente.id,
+      dni_titular: usuario.dni,
+    });
+  } catch (error) {
+    await t.rollback();
+    console.error('Error al crear expediente público:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};

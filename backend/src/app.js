@@ -3,6 +3,10 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 import authRoutes from './routes/auth.routes.js';
 import expedienteRoutes from './routes/expediente.routes.js';
@@ -15,7 +19,17 @@ import usuarioRoutes from './routes/usuario.routes.js';
 
 const app = express();
 
-app.use(helmet());
+// Helmet con X-Frame-Options permisivo para /uploads (visor PDF en iframe)
+app.use((req, res, next) => {
+  if (req.path.startsWith('/uploads')) {
+    // Permitir embeber archivos propios en iframe
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'self' http://localhost:3000 http://localhost:5173");
+    return next();
+  }
+  next();
+});
+app.use(helmet({ frameguard: false }));
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
@@ -35,6 +49,9 @@ app.use(limiter);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Servir archivos subidos (PDFs, imágenes)
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));

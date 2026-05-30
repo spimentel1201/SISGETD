@@ -8,10 +8,26 @@ import {
   obtenerExpedientes, 
   obtenerExpedientePorId, 
   obtenerEstadoExpediente,
-  actualizarEstadoExpediente 
+  actualizarEstadoExpediente,
+  crearExpedientePublico
 } from '../controllers/expediente.controller.js';
 
 const router = Router();
+
+// Ruta pública — portal ciudadano sin cuenta
+router.post(
+  '/publico',
+  upload.single('archivo'),
+  [
+    body('asunto').isLength({ min: 20 }).withMessage('El asunto debe tener mínimo 20 caracteres.'),
+    body('tupa_id').isUUID().withMessage('El código TUPA es requerido.'),
+    body('nombre').notEmpty().withMessage('El nombre es obligatorio.'),
+    body('dni').isLength({ min: 8, max: 11 }).withMessage('DNI inválido.'),
+    body('email').isEmail().withMessage('Email inválido.'),
+  ],
+  validate,
+  crearExpedientePublico
+);
 
 router.post(
   '/',
