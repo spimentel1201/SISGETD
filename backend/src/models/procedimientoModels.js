@@ -46,6 +46,11 @@ const Procedimiento = sequelize.define('Procedimiento', {
       key: 'id',
     },
   },
+  es_activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+  },
 
 }, {
   tableName: 'tupa_procedimientos',

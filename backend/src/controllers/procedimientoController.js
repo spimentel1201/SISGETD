@@ -121,7 +121,7 @@ export const remove = async (req, res) => {
       return res.status(404).json({ error: 'Procedimiento no encontrado.' });
     }
 
-    await procedimiento.destroy();
+    await procedimiento.update({ es_activo: false });
 
     res.status(200).json({ message: 'Procedimiento eliminado exitosamente.' });
   } catch (error) {
