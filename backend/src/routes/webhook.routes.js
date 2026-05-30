@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import validate from '../middlewares/validate.middleware.js';
+import * as WebhookController from '../controllers/webhook.controller.js';
 
 const router = Router();
 
@@ -14,9 +15,7 @@ router.post(
     body('score_prioridad').isFloat({ min: 0, max: 100 }).withMessage('score_prioridad debe ser entre 0 y 100.'),
   ],
   validate,
-  (req, res) => {
-    res.status(501).json({ message: 'Endpoint en construcción.' });
-  }
+  WebhookController.recibirResultadoML
 );
 
 export default router;

@@ -8,6 +8,10 @@ import authRoutes from './routes/auth.routes.js';
 import expedienteRoutes from './routes/expediente.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import webhookRoutes from './routes/webhook.routes.js';
+import notificacionRoutes from './routes/notificacion.routes.js';
+import areaRoutes from './routes/area.routes.js';
+import tupaRoutes from './routes/tupa_procedimiento.routes.js';
+import usuarioRoutes from './routes/usuario.routes.js';
 
 const app = express();
 
@@ -40,6 +44,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/expedientes', expedienteRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/notificaciones', notificacionRoutes);
+app.use('/api/areas', areaRoutes);
+app.use('/api/tupa', tupaRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

@@ -1,36 +1,31 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
 
-const Usuario = sequelize.define('Usuario', {
+const TupaProcedimiento = sequelize.define('TupaProcedimiento', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
-  dni: {
-    type: DataTypes.STRING(11),
+  codigo_tupa: {
+    type: DataTypes.STRING(30),
     allowNull: false,
     unique: true,
   },
-  nombre: {
-    type: DataTypes.STRING(120),
+  nombre_tramite: {
+    type: DataTypes.STRING(200),
     allowNull: false,
   },
-  email: {
-    type: DataTypes.STRING(120),
+  dias_plazo_legal: {
+    type: DataTypes.INTEGER,
     allowNull: false,
-    unique: true,
   },
-  rol: {
-    type: DataTypes.ENUM('ciudadano', 'funcionario', 'admin'),
-    defaultValue: 'ciudadano',
+  tipo_silencio: {
+    type: DataTypes.ENUM('positivo', 'negativo', 'automatico'),
+    allowNull: false,
   },
-  area_id: {
+  area_responsable_id: {
     type: DataTypes.UUID,
-    allowNull: true,
-  },
-  hash_password: {
-    type: DataTypes.TEXT,
     allowNull: false,
   },
   es_activo: {
@@ -39,10 +34,10 @@ const Usuario = sequelize.define('Usuario', {
     defaultValue: true,
   }
 }, {
-  tableName: 'usuarios',
+  tableName: 'tupa_procedimientos',
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: false
 });
 
-export default Usuario;
+export default TupaProcedimiento;

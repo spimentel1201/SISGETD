@@ -1,0 +1,636 @@
+{
+  "info": {
+    "name": "SGDML MVP API — Completa",
+    "description": "Colección completa para probar todos los endpoints del backend SGDML. FLUJO RECOMENDADO: 1.Auth → 2.Areas → 3.TUPA → 4.Usuarios → 5.Expedientes → 6.Webhook → 7.Dashboard → 8.Notificaciones",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "area_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tupa_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "usuario_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "expediente_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Autenticación",
+      "item": [
+        {
+          "name": "Registrar Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:5000/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dni\": \"00000001\",\n  \"nombre\": \"Administrador Sistema\",\n  \"email\": \"admin@municipalidad.gob.pe\",\n  \"password\": \"Admin1234\",\n  \"rol\": \"admin\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Registrar Funcionario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if(json.usuario) pm.collectionVariables.set('usuario_id', json.usuario.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:5000/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dni\": \"11111111\",\n  \"nombre\": \"Maria Torres\",\n  \"email\": \"m.torres@municipalidad.gob.pe\",\n  \"password\": \"Func1234\",\n  \"rol\": \"funcionario\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Registrar Ciudadano",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:5000/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dni\": \"22222222\",\n  \"nombre\": \"Carlos Quispe\",\n  \"email\": \"carlos@gmail.com\",\n  \"password\": \"Ciudadano1\",\n  \"rol\": \"ciudadano\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login (guarda token automático)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if(json.token) pm.collectionVariables.set('jwt_token', json.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:5000/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@municipalidad.gob.pe\",\n  \"password\": \"Admin1234\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Áreas",
+      "item": [
+        {
+          "name": "Crear Área",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if(json.area) pm.collectionVariables.set('area_id', json.area.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/areas",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"GDE\",\n  \"nombre\": \"Gerencia de Desarrollo Económico\",\n  \"gerencia\": \"Desarrollo Económico\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Listar Áreas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:5000/api/areas"
+          }
+        },
+        {
+          "name": "Obtener Área por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:5000/api/areas/{{area_id}}"
+          }
+        },
+        {
+          "name": "Actualizar Área",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/areas/{{area_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"GDE\",\n  \"nombre\": \"Gerencia de Desarrollo Económico (Actualizado)\",\n  \"gerencia\": \"Desarrollo Económico\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Desactivar Área (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/areas/{{area_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. TUPA (Procedimientos)",
+      "item": [
+        {
+          "name": "Crear Trámite TUPA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if(json.tupa) pm.collectionVariables.set('tupa_id', json.tupa.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/tupa",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_tupa\": \"TUPA-001\",\n  \"nombre_tramite\": \"Licencia de Funcionamiento para Establecimientos de Hasta 100 m²\",\n  \"dias_plazo_legal\": 15,\n  \"tipo_silencio\": \"positivo\",\n  \"area_responsable_id\": \"{{area_id}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Listar TUPAs activos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:5000/api/tupa"
+          }
+        },
+        {
+          "name": "Obtener TUPA por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:5000/api/tupa/{{tupa_id}}"
+          }
+        },
+        {
+          "name": "Actualizar TUPA",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/tupa/{{tupa_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_tupa\": \"TUPA-001\",\n  \"nombre_tramite\": \"Licencia de Funcionamiento (actualizado)\",\n  \"dias_plazo_legal\": 20,\n  \"tipo_silencio\": \"negativo\",\n  \"area_responsable_id\": \"{{area_id}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Desactivar TUPA (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/tupa/{{tupa_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Gestión de Usuarios (Admin)",
+      "item": [
+        {
+          "name": "Listar Todos los Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/usuarios"
+          }
+        },
+        {
+          "name": "Obtener Usuario por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/usuarios/{{usuario_id}}"
+          }
+        },
+        {
+          "name": "Actualizar Usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/usuarios/{{usuario_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Maria Torres Actualizada\",\n  \"email\": \"m.torres@municipalidad.gob.pe\",\n  \"rol\": \"funcionario\",\n  \"area_id\": \"{{area_id}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Listar Solo Funcionarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/usuarios?rol=funcionario"
+          }
+        },
+        {
+          "name": "Asignar Área a Funcionario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/usuarios/{{usuario_id}}/area",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"area_id\": \"{{area_id}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Desactivar Usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/usuarios/{{usuario_id}}/desactivar"
+          }
+        },
+        {
+          "name": "Reactivar Usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/usuarios/{{usuario_id}}/reactivar"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Expedientes",
+      "item": [
+        {
+          "name": "Crear Expediente (con archivo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if(json.expediente_id) pm.collectionVariables.set('expediente_id', json.expediente_id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/expedientes",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "asunto",
+                  "value": "Solicito licencia de funcionamiento para mi bodega comercial ubicada en Jr. Lima 123",
+                  "type": "text"
+                },
+                {
+                  "key": "tupa_id",
+                  "value": "{{tupa_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "description": "Selecciona un PDF, JPEG o PNG (max 20MB)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar Expedientes (Bandeja Funcionario)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/expedientes"
+          }
+        },
+        {
+          "name": "Ver Detalle Expediente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/expedientes/{{expediente_id}}"
+          }
+        },
+        {
+          "name": "Seguimiento Público (requiere DNI)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:5000/api/expedientes/{{expediente_id}}/estado?dni=22222222"
+          }
+        },
+        {
+          "name": "Actualizar Estado (Evaluar/Derivar)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/expedientes/{{expediente_id}}/estado",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nuevo_estado\": \"en_evaluacion\",\n  \"observacion\": \"Expediente en revisión por el especialista.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Resolver Expediente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/expedientes/{{expediente_id}}/estado",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nuevo_estado\": \"resuelto\",\n  \"observacion\": \"Se aprueba la licencia de funcionamiento. Resolución N° 0142-2026.\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Webhook — Simular IA",
+      "item": [
+        {
+          "name": "Enviar Resultado ML",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:5000/api/webhooks/ml-resultado",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expediente_id\": \"{{expediente_id}}\",\n  \"tupa_id\": \"{{tupa_id}}\",\n  \"area_asignada_id\": \"{{area_id}}\",\n  \"ia_confianza\": 0.93,\n  \"score_prioridad\": 78\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Dashboard & KPIs",
+      "item": [
+        {
+          "name": "KPIs Generales",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/dashboard/kpis"
+          }
+        },
+        {
+          "name": "Expedientes Críticos (vencen en 3 días)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/dashboard/expedientes-criticos"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Notificaciones",
+      "item": [
+        {
+          "name": "Mis Notificaciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": "http://localhost:5000/api/notificaciones"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Estado del servidor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:5000/api/../health"
+          }
+        }
+      ]
+    }
+  ]
+}

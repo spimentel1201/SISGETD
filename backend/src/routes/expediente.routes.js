@@ -1,8 +1,15 @@
 import { Router } from 'express';
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import validate from '../middlewares/validate.middleware.js';
 import { authMiddleware, authorizeRoles } from '../middlewares/auth.middleware.js';
 import upload from '../config/multer.js';
+import { 
+  crearExpediente, 
+  obtenerExpedientes, 
+  obtenerExpedientePorId, 
+  obtenerEstadoExpediente,
+  actualizarEstadoExpediente 
+} from '../controllers/expediente.controller.js';
 
 const router = Router();
 
@@ -19,36 +26,44 @@ router.post(
       .withMessage('El código TUPA es requerido y debe ser un UUID válido.'),
   ],
   validate,
-  (req, res) => {
-    res.status(501).json({ message: 'Endpoint en construcción.' });
-  }
+  crearExpediente
 );
 
 router.get(
   '/',
   authMiddleware,
   authorizeRoles('funcionario', 'admin'),
-  (req, res) => {
-    res.status(501).json({ message: 'Endpoint en construcción.' });
-  }
+  obtenerExpedientes
 );
 
 router.get(
   '/:id',
+  authMiddleware,
   [param('id').isUUID().withMessage('ID de expediente inválido.')],
   validate,
-  (req, res) => {
-    res.status(501).json({ message: 'Endpoint en construcción.' });
-  }
+  obtenerExpedientePorId
 );
 
 router.get(
   '/:id/estado',
-  [param('id').isUUID().withMessage('ID de expediente inválido.')],
+  [
+    query('dni').notEmpty().withMessage('El DNI del titular es obligatorio.').isLength({ min: 8, max: 11 }).withMessage('DNI inválido.')
+  ],
   validate,
-  (req, res) => {
-    res.status(501).json({ message: 'Endpoint en construcción.' });
-  }
+  obtenerEstadoExpediente
+);
+
+router.put(
+  '/:id/estado',
+  authMiddleware,
+  authorizeRoles('funcionario', 'admin'),
+  [
+    param('id').isUUID().withMessage('ID de expediente inválido.'),
+    body('nuevo_estado').optional().isString(),
+    body('observacion').optional().isString()
+  ],
+  validate,
+  actualizarEstadoExpediente
 );
 
 export default router;

@@ -26,9 +26,7 @@ router.post(
     body('password').notEmpty().withMessage('La contraseña es requerida.'),
   ],
   validate,
-  (req, res) => {
-    res.status(501).json({ message: 'Endpoint en construcción.' });
-  }
+  AuthController.login
 );
 
 export default router;

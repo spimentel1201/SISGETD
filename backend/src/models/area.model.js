@@ -9,19 +9,23 @@ const Area = sequelize.define('Area', {
     primaryKey: true,
   },
   codigo: {
-    type: DataTypes.VARCHAR(20),
+    type: DataTypes.STRING(20),
     allowNull: false,
     unique: true,
   },
   nombre: {
-    type: DataTypes.VARCHAR(120),
+    type: DataTypes.STRING(120),
     allowNull: false,
   },
   gerencia: {
-    type: DataTypes.VARCHAR(120),
+    type: DataTypes.STRING(120),
     allowNull: false,
   },
- 
+  es_activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+  }
 }, {
   tableName: 'areas',
   timestamps: true,
